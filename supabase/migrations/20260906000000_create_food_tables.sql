@@ -1,0 +1,84 @@
+create table foods (
+    id bigint generated always as identity primary key,
+    food_code text not null unique,
+    name text not null,
+    food_group_code text not null,
+    food_group_name text not null,
+    source text not null,
+    source_version text not null,
+    created_at timestamptz not null default now()
+);
+
+create table nutrients (
+    id bigint generated always as identity primary key,
+    code text not null unique,
+    name text not null,
+    unit text not null,
+    category text not null,
+    display_order integer not null,
+    is_primary boolean not null default false,
+    created_at timestamptz not null default now()
+);
+
+create table food_nutrients (
+    food_id bigint not null,
+    nutrient_id bigint not null,
+    amount numeric,
+    value_status text not null,
+    raw_value text,
+    created_at timestamptz not null default now(),
+
+    primary key (food_id, nutrient_id),
+
+    foreign key (food_id)
+        references foods (id)
+        on delete cascade,
+
+    foreign key (nutrient_id)
+        references nutrients (id)
+        on delete cascade,
+
+    check (amount is null or amount >= 0),
+
+    check (
+        value_status in (
+            'measured',
+            'estimated',
+            'zero',
+            'trace',
+            'estimated_trace',
+            'not_measured',
+            'missing'
+        )
+    )
+);
+
+alter table foods enable row level security;
+alter table nutrients enable row level security;
+alter table food_nutrients enable row level security;
+
+revoke all on table foods from anon, authenticated;
+revoke all on table nutrients from anon, authenticated;
+revoke all on table food_nutrients from anon, authenticated;
+
+grant select on table foods to anon, authenticated;
+grant select on table nutrients to anon, authenticated;
+grant select on table food_nutrients to anon, authenticated;
+
+create policy "Public read access for foods"
+on foods
+for select
+to anon, authenticated
+using (true);
+
+create policy "Public read access for nutrients"
+on nutrients
+for select
+to anon, authenticated
+using (true);
+
+create policy "Public read access for food nutrients"
+on food_nutrients
+for select
+to anon, authenticated
+using (true);
