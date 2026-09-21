@@ -1,5 +1,20 @@
 import { createClient } from "@/lib/supabase/server";
 
+type FoodWithNutrients = {
+  food_code: string;
+  name: string;
+  food_nutrients: {
+    amount: number | null;
+    value_status: string;
+    nutrients: {
+      code: string;
+      name: string;
+      unit: string;
+      display_order: number;
+    };
+  }[];
+};
+
 export default async function Home() {
   const supabase = createClient();
 
@@ -19,7 +34,8 @@ export default async function Home() {
         )
       )`)
     .eq("food_code", "TEST001")
-    .single();
+    .single()
+    .overrideTypes<FoodWithNutrients, { merge: false }>();
 
   return (
     <main className="min-h-screen p-8">

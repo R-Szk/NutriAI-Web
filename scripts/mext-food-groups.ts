@@ -1,0 +1,32 @@
+const FOOD_GROUP_NAMES: Record<string, string> = {
+  "01": "穀類",
+  "02": "いも及びでん粉類",
+  "03": "砂糖及び甘味類",
+  "04": "豆類",
+  "05": "種実類",
+  "06": "野菜類",
+  "07": "果実類",
+  "08": "きのこ類",
+  "09": "藻類",
+  "10": "魚介類",
+  "11": "肉類",
+  "12": "卵類",
+  "13": "乳類",
+  "14": "油脂類",
+  "15": "菓子類",
+  "16": "し好飲料類",
+  "17": "調味料及び香辛料類",
+  "18": "調理済み流通食品類",
+};
+
+export function getFoodGroupName(foodGroupCode: string) {
+    const name = FOOD_GROUP_NAMES[foodGroupCode];
+
+    if (!name) {
+        throw new Error(
+            `未対応の食品群コードです: ${foodGroupCode}`,
+        );
+    }
+
+    return name;
+}
