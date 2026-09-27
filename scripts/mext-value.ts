@@ -1,3 +1,4 @@
+/** 食品成分表に記載された数値と特殊記号を、DB保存用の値と状態へ変換する。 */
 export type NutrientValueStatus =
   | "measured"
   | "estimated"
@@ -19,6 +20,7 @@ export function parseNutrientValue(
 ): ParsedNutrientValue {
   const normalizedValue = rawValue.trim();
 
+  // 空欄・参照・未測定・微量は数値変換より先に、表記ごとの意味を確定する。
   if (normalizedValue === "") {
     return {
       amount: null,
@@ -59,6 +61,7 @@ export function parseNutrientValue(
     };
   }
 
+  // †は数値そのものではなく注記記号なので、rawValueには残しつつ計算時だけ除く。
   const valueWithoutNote = normalizedValue.endsWith("†")
     ? normalizedValue.slice(0, -1)
     : normalizedValue;

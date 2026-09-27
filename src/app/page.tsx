@@ -1,3 +1,4 @@
+/** NutriAIのトップページ。状態を持つ処理はClient Componentへ委譲する。 */
 import NutritionDashboard from "@/components/nutrition-dashboard";
 
 export default function Home() {

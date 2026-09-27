@@ -1,5 +1,6 @@
 "use client";
 
+/** 食品の検索・選択・摂取量計算から、食事保存フォームの表示までを担当する。 */
 import { createClient } from "@/lib/supabase/client";
 import { type SubmitEvent, useState } from "react";
 import { normalizeSearchQuery, parseIntakeAmount, calculateNutrientAmount } from "@/lib/food-search";
@@ -47,6 +48,7 @@ export default function FoodSearch({
     const [foods, setFoods] = useState<FoodSearchResult[]>([]);
     const [selectedFood, setSelectedFood] = useState<FoodSearchResult | null>(null);
 
+    // 入力中の文字列と、計算に使用した確定値を分けて誤保存を防ぐ。
     const [amountText, setAmountText] = useState("");
     const [amountMessage, setAmountMessage] = useState("");
 
@@ -83,6 +85,7 @@ export default function FoodSearch({
         setAmountText("");
         setAmountMessage("");
 
+        // Phase 1は文部科学省データだけを対象にし、結果数も画面で扱える件数に絞る。
         const supabase = createClient();
         const { data, error } = await supabase
             .from("foods")
@@ -110,6 +113,7 @@ export default function FoodSearch({
     function handleFoodSelection(food: FoodSearchResult) {
         const isSameFood = selectedFood?.food_code === food.food_code;
 
+        // 食品が変わると以前の栄養計算と摂取量は無効になる。
         setConfirmedAmountG(null);
 
         if (isSameFood) {
@@ -169,6 +173,7 @@ export default function FoodSearch({
             return;
         }
 
+        // 取得値は100g当たりなので、主要栄養素だけを摂取量に比例換算する。
         const results = data
             .filter((record) => record.nutrients.is_primary)
             .sort(
@@ -234,6 +239,7 @@ export default function FoodSearch({
                                 value={amountText}
                                 onChange={(event) => {
                                     setAmountText(event.target.value);
+                                    // 入力を変えた時点で、以前の確定結果は保存できないよう破棄する。
                                     setCalculatedNutrients([]);
                                     setConfirmedAmountG(null);
                                     setAmountMessage("");

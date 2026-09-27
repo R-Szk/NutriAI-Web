@@ -1,3 +1,4 @@
+/** 食事区分、ローカル日付、保存前バリデーションの仕様を保証する。 */
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
@@ -34,6 +35,7 @@ test("ローカル日付をYYYY-MM-DD形式に変換できる", () => {
   assert.equal(getLocalDateString(date), "2026-09-03");
 });
 
+// 各異常系ではこの正常値の一項目だけを変え、失敗原因を明確にする。
 const validMealRecord: MealRecordInput = {
   userId: "test-user-id",
   mealDate: "2026-09-24",

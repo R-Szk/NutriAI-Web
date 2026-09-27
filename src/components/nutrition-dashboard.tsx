@@ -1,11 +1,13 @@
 "use client";
 
+/** 記録日と匿名認証状態を管理し、配下の食事機能へ共有する親コンポーネント。 */
 import { useState } from "react";
 import FoodSearch from "@/components/food-search";
 import { useAnonymousSession } from "@/hooks/use-anonymous-session";
 import { getLocalDateString } from "@/lib/meals";
 
 export default function NutritionDashboard() {
+    // UTC変換による日付ずれを避け、ブラウザのローカル日付を初期値にする。
     const [mealDate, setMealDate] = useState(() => getLocalDateString(new Date()));
 
     const {

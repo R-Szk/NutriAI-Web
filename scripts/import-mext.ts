@@ -1,3 +1,7 @@
+/**
+ * 文部科学省の食品成分表Excelを検証・解析し、食品と栄養値をSupabaseへ取り込む。
+ * 更新フラグを省略した実行はDBを書き換えず、解析結果だけを表示する。
+ */
 import {
     parseNutrientValue,
     type NutrientValueStatus,
@@ -54,6 +58,7 @@ async function main() {
         throw new Error(`シート「${SHEET_NAME}」が見つかりません`);
     }
 
+    // Excelの列位置が改訂で変わった場合、誤った栄養素として登録する前に停止する。
     for(const nutrient of NUTRIENT_DEFINITIONS) {
         const actualSourceCode = getCellText(
             worksheet.getRow(12),
@@ -68,6 +73,7 @@ async function main() {
         }
     }
 
+    // 元の行番号を保持し、後から同じ行の全栄養素を読み取れるようにする。
     const foods = [];
     for (
         let rowNumber = FIRST_DATA_ROW;
@@ -110,6 +116,7 @@ async function main() {
         APPLY_FOODS_FLAG,
     );
 
+    // foodsは件数が多いため、API制限と失敗範囲を抑える目的で分割してupsertする。
     if (shouldApplyFoods) {
         const foodRecords = foods.map((food) => ({
             food_code: food.foodCode,
@@ -150,6 +157,7 @@ async function main() {
         return;
     }
 
+    // 開発中は1食品だけ、本番取り込みでは全食品を同じ処理経路で解析する。
     const targetFoods = selectedFoodCode
         ? [selectFoodByCode(foods, selectedFoodCode)]
         : foods;
@@ -176,6 +184,7 @@ async function main() {
     console.log(`栄養値件数: ${foodNutrients.length}`);
     console.table(foodNutrients.slice(0, 12));
 
+    // 特殊値の変換漏れを件数の偏りから発見できるよう、状態別に集計する。
     const statusCounts: Record<NutrientValueStatus, number> = {
         measured: 0,
         estimated: 0,
@@ -221,6 +230,7 @@ async function main() {
 
     const supabase = createAdminClient();
 
+    // Excelの食品コードを、外部キーとして必要なDBのIDへ対応付ける。
     const foodIdByCode = new Map<string, number>();
 
     if (selectedFoodCode) {
@@ -236,6 +246,7 @@ async function main() {
 
         foodIdByCode.set(foodRecord.food_code, foodRecord.id);
     } else {
+        // Supabaseの1回当たり取得上限を超えるため、全食品IDはページ単位で読む。
         for (let from = 0; ; from += SELECT_PAGE_SIZE) {
             const { data: foodRecords, error: foodError } =
                 await supabase
@@ -280,6 +291,7 @@ async function main() {
         );
     }
 
+    // 栄養素コードからfood_nutrients用の外部キーを引けるようにする。
     const nutrientIdByCode = new Map(
         nutrientRecords.map((nutrient) => [
             nutrient.code,
@@ -313,6 +325,7 @@ async function main() {
         };
     });
 
+    // (food_id, nutrient_id) の一意制約を使い、再実行しても重複させない。
     const databaseBatches = splitIntoBatches(databaseRecords, BATCH_SIZE);
 
     for (const [index, batch] of databaseBatches.entries()) {

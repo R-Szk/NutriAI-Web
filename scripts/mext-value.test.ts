@@ -1,8 +1,10 @@
+/** 食品成分表特有の数値・記号を、値と状態へ正しく分解できることを保証する。 */
 import assert from "node:assert/strict";
 import test from "node:test";
 
 import { parseNutrientValue } from "./mext-value";
 
+// 同じテスト構造で代表的な表記を網羅するテーブル駆動テスト。
 const cases = [
   {
     input: "12.3",

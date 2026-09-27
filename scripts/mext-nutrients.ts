@@ -1,3 +1,4 @@
+/** 文部科学省Excelの列と、NutriAI内部の栄養素コードを対応付ける定義。 */
 export type NutrientDefinition = {
   column: number;
   sourceCode: string;
@@ -9,6 +10,7 @@ export type NutrientDefinition = {
   isPrimary: boolean;
 };
 
+// displayOrderは画面表示順、isPrimaryはPhase 1で主要栄養素として扱うかを表す。
 export const NUTRIENT_DEFINITIONS: NutrientDefinition[] = [
   { column: 6, sourceCode: "ENERC", code: "energy_kj", name: "エネルギー", unit: "kJ", category: "基本成分", displayOrder: 1, isPrimary: false },
   { column: 7, sourceCode: "ENERC_KCAL", code: "energy_kcal", name: "エネルギー", unit: "kcal", category: "基本成分", displayOrder: 2, isPrimary: true },

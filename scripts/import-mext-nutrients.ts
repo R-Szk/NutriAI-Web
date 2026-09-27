@@ -1,3 +1,4 @@
+/** 文部科学省データで使用する栄養素定義をSupabaseへ登録するスクリプト。 */
 import { NUTRIENT_DEFINITIONS } from "./mext-nutrients";
 import { createAdminClient } from "./supabase-admin";
 
@@ -15,6 +16,7 @@ async function main() {
 
     const shouldApply = process.argv.includes(APPLY_FLAG);
 
+    // 誤操作によるDB更新を防ぐため、--applyがない場合は必ずdry-runにする。
     if (!shouldApply) {
         console.log("dry-runのためDBには登録しません");
         console.log(`登録予定の栄養素: ${nutrients.length}件`);
@@ -24,6 +26,7 @@ async function main() {
 
     const supabase = createAdminClient();
 
+    // codeを自然キーとして、再実行時は既存定義を更新する。
     const { data, error } = await supabase
         .from("nutrients")
         .upsert(nutrients, {

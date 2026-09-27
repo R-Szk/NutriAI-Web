@@ -1,3 +1,4 @@
+-- 文部科学省の食品成分データを、食品・栄養素・両者の対応に正規化して保存する。
 create table foods (
     id bigint generated always as identity primary key,
     food_code text not null unique,
@@ -9,6 +10,7 @@ create table foods (
     created_at timestamptz not null default now()
 );
 
+-- 栄養素の名称・単位・表示順を一元管理するマスタ。
 create table nutrients (
     id bigint generated always as identity primary key,
     code text not null unique,
@@ -20,6 +22,7 @@ create table nutrients (
     created_at timestamptz not null default now()
 );
 
+-- 各食品100g当たりの栄養値と、測定・推定などの値の状態を保持する。
 create table food_nutrients (
     food_id bigint not null,
     nutrient_id bigint not null,
@@ -38,6 +41,7 @@ create table food_nutrients (
         references nutrients (id)
         on delete cascade,
 
+    -- 未測定値はNULLを許容するが、栄養量として負数は保存しない。
     check (amount is null or amount >= 0),
 
     check (
@@ -53,6 +57,7 @@ create table food_nutrients (
     )
 );
 
+-- 食品マスタは全利用者が読める一方、ブラウザからの変更は許可しない。
 alter table foods enable row level security;
 alter table nutrients enable row level security;
 alter table food_nutrients enable row level security;

@@ -1,3 +1,4 @@
+/** 管理者権限で主要3テーブルへ接続し、取り込み件数を確認する診断スクリプト。 */
 import { createAdminClient } from "./supabase-admin";
 
 const TABLES = [
@@ -10,6 +11,7 @@ async function main() {
     const supabase = createAdminClient();
 
     for (const table of TABLES) {
+        // 行データ自体は取得せず、正確な件数だけを問い合わせる。
         const { count, error } = await supabase
             .from(table)
             .select("*", {

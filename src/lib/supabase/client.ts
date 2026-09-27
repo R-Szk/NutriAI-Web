@@ -1,3 +1,4 @@
+/** Client Componentから公開用キーでSupabaseへ接続するブラウザクライアント。 */
 import { createBrowserClient } from "@supabase/ssr";
 
 export function createClient() {

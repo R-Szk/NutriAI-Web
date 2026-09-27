@@ -1,3 +1,4 @@
+/** 全ページに共通するHTML構造、言語設定、メタデータを定義するルートレイアウト。 */
 import type { Metadata } from "next";
 import "./globals.css";
 

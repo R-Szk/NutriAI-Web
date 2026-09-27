@@ -1,5 +1,6 @@
 "use client";
 
+/** 計算済みの食品を、選択した食事区分へ保存するフォーム。 */
 import { type SubmitEvent, useState } from "react";
 import {
     MEAL_TYPE_LABELS,
@@ -41,6 +42,7 @@ export default function MealSaveForm({
         setIsSaving(true);
         setSaveMessage("");
 
+        // DB処理の成功・失敗をこのフォーム内で利用者へフィードバックする。
         try {
             await saveMealItem({
                 userId,
@@ -59,6 +61,7 @@ export default function MealSaveForm({
         }
     }
 
+    // 認証が確定していない間は、所有者不明のレコードを送信しない。
     const isSaveDisabled = isSaving || isAuthLoading || !userId || Boolean(authError);
 
     return (

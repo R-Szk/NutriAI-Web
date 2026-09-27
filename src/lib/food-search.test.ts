@@ -1,3 +1,4 @@
+/** 食品検索入力、摂取量入力、100g当たり栄養値の比例計算を検証する。 */
 import assert from "node:assert/strict";
 import test from "node:test";
 

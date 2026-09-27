@@ -1,3 +1,4 @@
+/** Server Componentやサーバー処理から、公開用キーで読み取り接続するクライアント。 */
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 
 export function createClient() {

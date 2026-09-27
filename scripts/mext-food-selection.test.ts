@@ -1,3 +1,4 @@
+/** 食品コードによる単一食品選択の仕様を固定するテスト。 */
 import assert from "node:assert/strict";
 import test from "node:test";
 

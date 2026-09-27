@@ -1,5 +1,6 @@
 "use client";
 
+/** Supabaseの匿名セッションを復元し、存在しなければ新しく作成するHook。 */
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -9,6 +10,7 @@ type AnonymousSessionState = {
     authError: string | null;
 };
 
+// React Strict ModeでEffectが再実行されても匿名ユーザーを二重作成しないよう共有する。
 let sessionInitializationPromise: Promise<string> | null = null;
 
 async function getOrCreateAnonymousUserId(): Promise<string> {
@@ -59,6 +61,7 @@ export function useAnonymousSession(): AnonymousSessionState {
     const [authError, setAuthError] = useState<string | null>(null);
 
     useEffect(() => {
+        // 非同期処理中にunmountされた場合、破棄済みコンポーネントのstate更新を防ぐ。
         let isMounted = true;
 
         async function initializeSession() {
