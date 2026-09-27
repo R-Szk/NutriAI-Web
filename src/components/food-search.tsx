@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { type SubmitEvent, useState } from "react";
 import { normalizeSearchQuery, parseIntakeAmount, calculateNutrientAmount } from "@/lib/food-search";
+import MealSaveForm from "./meal-save-form";
 
 type FoodSearchResult = {
     id: number;
@@ -30,12 +31,26 @@ type CalculatedNutrient = {
     amount: number | null;
 };
 
-export default function FoodSearch() {
+type FoodSearchProps = {
+    mealDate: string;
+    userId: string | null;
+    isAuthLoading: boolean;
+    authError: string | null;
+};
+
+export default function FoodSearch({
+    mealDate,
+    userId,
+    isAuthLoading,
+    authError,
+}: FoodSearchProps) {
     const [foods, setFoods] = useState<FoodSearchResult[]>([]);
     const [selectedFood, setSelectedFood] = useState<FoodSearchResult | null>(null);
 
     const [amountText, setAmountText] = useState("");
     const [amountMessage, setAmountMessage] = useState("");
+
+    const [confirmedAmountG, setConfirmedAmountG] = useState<number | null>(null);
 
     const [calculatedNutrients, setCalculatedNutrients] = useState<CalculatedNutrient[]>([]);
     const [isCalculating, setIsCalculating] = useState(false);
@@ -52,6 +67,7 @@ export default function FoodSearch() {
         if (!normalizedQuery) {
             setFoods([]);
             setSelectedFood(null);
+            setConfirmedAmountG(null);
             setCalculatedNutrients([]);
             setAmountText("");
             setAmountMessage("");
@@ -63,6 +79,7 @@ export default function FoodSearch() {
         setSelectedFood(null);
         setMessage("");
         setCalculatedNutrients([]);
+        setConfirmedAmountG(null);
         setAmountText("");
         setAmountMessage("");
 
@@ -93,6 +110,8 @@ export default function FoodSearch() {
     function handleFoodSelection(food: FoodSearchResult) {
         const isSameFood = selectedFood?.food_code === food.food_code;
 
+        setConfirmedAmountG(null);
+
         if (isSameFood) {
             setSelectedFood(null);
             setCalculatedNutrients([]);
@@ -113,6 +132,7 @@ export default function FoodSearch() {
 
         if (intakeAmount === null) {
             setCalculatedNutrients([]);
+            setConfirmedAmountG(null);
             setAmountMessage("0より大きい摂取量を入力してください");
             return;
         }
@@ -123,6 +143,7 @@ export default function FoodSearch() {
 
         setIsCalculating(true);
         setCalculatedNutrients([]);
+        setConfirmedAmountG(null);
         setAmountMessage("");
 
         const supabase = createClient();
@@ -163,6 +184,7 @@ export default function FoodSearch() {
             }));
 
         setCalculatedNutrients(results);
+        setConfirmedAmountG(intakeAmount);
         setAmountMessage(`摂取量: ${intakeAmount}g`);
     }
 
@@ -213,6 +235,7 @@ export default function FoodSearch() {
                                 onChange={(event) => {
                                     setAmountText(event.target.value);
                                     setCalculatedNutrients([]);
+                                    setConfirmedAmountG(null);
                                     setAmountMessage("");
                                 }} />
                         </label>
@@ -246,6 +269,19 @@ export default function FoodSearch() {
                                 </div>
                             ))}
                         </dl>
+                    )}
+                    {selectedFood &&
+                        confirmedAmountG !== null &&
+                        calculatedNutrients.length > 0 && (
+                            <MealSaveForm
+                            userId={userId}
+                            mealDate={mealDate}
+                            foodId={selectedFood.id}
+                            amountG={confirmedAmountG}
+                            isAuthLoading={isAuthLoading}
+                            authError={authError}
+                            onSaved={() => undefined}
+                            />
                     )}
                 </div>
             )}

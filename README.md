@@ -86,13 +86,18 @@ npm run start
 
 データベースの変更履歴は`supabase/migrations`に保存します。
 
+## ドキュメント
+
+- [Phase 1 開発進捗](docs/phase1-progress.md)
+- [食事記録・匿名認証 設計](docs/superpowers/specs/2026-09-23-meal-recording-design.md)
+
 ## 現在の開発状況
 
 - [x] Next.js・TypeScriptの初期設定
 - [x] Supabaseへの接続
 - [x] 食品・栄養素テーブルの作成
-- [ ] 文部科学省データの取り込み
-- [ ] 食品検索
-- [ ] 摂取量に応じた栄養計算
+- [x] 文部科学省データの取り込み
+- [x] 食品検索と食品選択
+- [x] 摂取量に応じた栄養計算
 - [ ] 食事記録の保存
 - [ ] 1日の栄養合計表示
