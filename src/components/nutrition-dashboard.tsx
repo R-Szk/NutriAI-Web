@@ -5,16 +5,23 @@ import { useState } from "react";
 import FoodSearch from "@/components/food-search";
 import { useAnonymousSession } from "@/hooks/use-anonymous-session";
 import { getLocalDateString } from "@/lib/meals";
+import DailyMealRecords from "./daily-meal-records";
 
 export default function NutritionDashboard() {
     // UTC変換による日付ずれを避け、ブラウザのローカル日付を初期値にする。
     const [mealDate, setMealDate] = useState(() => getLocalDateString(new Date()));
+
+    const [refreshVersion, setRefreshVersion] = useState(0);
 
     const {
         userId,
         isAuthLoading,
         authError,
     } = useAnonymousSession();
+
+    function handleMealSaved() {
+        setRefreshVersion((current) => current + 1)
+    }
 
     return (
         <>
@@ -44,7 +51,13 @@ export default function NutritionDashboard() {
                 userId={userId}
                 isAuthLoading={isAuthLoading}
                 authError={authError}
+                onMealSaved={handleMealSaved}
             />
+
+            <DailyMealRecords
+                userId={userId}
+                mealDate={mealDate}
+                refreshVersion={refreshVersion} />
         </>
     );
 }

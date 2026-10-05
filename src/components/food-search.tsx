@@ -37,6 +37,7 @@ type FoodSearchProps = {
     userId: string | null;
     isAuthLoading: boolean;
     authError: string | null;
+    onMealSaved: () => void;
 };
 
 export default function FoodSearch({
@@ -44,6 +45,7 @@ export default function FoodSearch({
     userId,
     isAuthLoading,
     authError,
+    onMealSaved,
 }: FoodSearchProps) {
     const [foods, setFoods] = useState<FoodSearchResult[]>([]);
     const [selectedFood, setSelectedFood] = useState<FoodSearchResult | null>(null);
@@ -286,7 +288,7 @@ export default function FoodSearch({
                             amountG={confirmedAmountG}
                             isAuthLoading={isAuthLoading}
                             authError={authError}
-                            onSaved={() => undefined}
+                            onSaved={onMealSaved}
                             />
                     )}
                 </div>
