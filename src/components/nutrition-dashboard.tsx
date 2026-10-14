@@ -6,10 +6,19 @@ import FoodSearch from "@/components/food-search";
 import { useAnonymousSession } from "@/hooks/use-anonymous-session";
 import { getLocalDateString } from "@/lib/meals";
 import DailyMealRecords from "./daily-meal-records";
+import DailyNutritionSummary from "./daily-nutrition-summary";
+import { useDailyMeals } from "@/hooks/use-daily-meals";
+import { calculateDailyNutrientTotals } from "@/lib/daily-nutrition";
 
-export default function NutritionDashboard() {
+type NutritionDashboardProps = {
+    initialMealDate?: string;
+};
+
+export default function NutritionDashboard({
+    initialMealDate,
+}: NutritionDashboardProps) {
     // UTC変換による日付ずれを避け、ブラウザのローカル日付を初期値にする。
-    const [mealDate, setMealDate] = useState(() => getLocalDateString(new Date()));
+    const [mealDate, setMealDate] = useState(() => initialMealDate ?? getLocalDateString(new Date()));
 
     const [refreshVersion, setRefreshVersion] = useState(0);
 
@@ -18,6 +27,16 @@ export default function NutritionDashboard() {
         isAuthLoading,
         authError,
     } = useAnonymousSession();
+
+    const {
+        meals,
+        isLoading: isMealsLoading,
+        loadError,
+    } = useDailyMeals(userId, mealDate, refreshVersion);
+
+    const dailyTotals = calculateDailyNutrientTotals(
+        meals.flatMap((meal) => meal.items),
+    );
 
     function handleMealSaved() {
         setRefreshVersion((current) => current + 1)
@@ -46,6 +65,10 @@ export default function NutritionDashboard() {
 
             </section>
 
+            {!isMealsLoading && !loadError && (
+                <DailyNutritionSummary totals={dailyTotals} />
+            )}
+
             <FoodSearch
                 mealDate={mealDate}
                 userId={userId}
@@ -57,7 +80,10 @@ export default function NutritionDashboard() {
             <DailyMealRecords
                 userId={userId}
                 mealDate={mealDate}
-                refreshVersion={refreshVersion} />
+                meals={meals}
+                isLoading={isMealsLoading}
+                loadError={loadError}
+            />
         </>
     );
 }
