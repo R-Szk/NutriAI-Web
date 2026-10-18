@@ -5,7 +5,7 @@ import { useState } from "react";
 import FoodSearch from "@/components/food-search";
 import { useAnonymousSession } from "@/hooks/use-anonymous-session";
 import { getLocalDateString } from "@/lib/meals";
-import DailyMealRecords from "./daily-meal-records";
+import MealTimeline from "./meal-timeline";
 import DailyNutritionSummary from "./daily-nutrition-summary";
 import { useDailyMeals } from "@/hooks/use-daily-meals";
 import { calculateDailyNutrientTotals } from "@/lib/daily-nutrition";
@@ -77,13 +77,21 @@ export default function NutritionDashboard({
                 onMealSaved={handleMealSaved}
             />
 
-            <DailyMealRecords
-                userId={userId}
-                mealDate={mealDate}
-                meals={meals}
-                isLoading={isMealsLoading}
-                loadError={loadError}
-            />
+            {!userId && !isAuthLoading && !authError && (
+                <p className="mt-8 text-gray-600">記録機能を準備しています...</p>
+            )}
+
+            {isMealsLoading && (
+                <p className="mt-8 text-gray-600">食事記録を読み込んでいます...</p>
+            )}
+
+            {loadError && (
+                <p className="mt-8 text-red-700">{loadError}</p>
+            )}
+
+            {userId && !isMealsLoading && !loadError && (
+                <MealTimeline meals={meals} mealDate={mealDate} />
+            )}
         </>
     );
 }
