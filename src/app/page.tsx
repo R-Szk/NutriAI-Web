@@ -8,12 +8,23 @@ export default async function Home({searchParams}: PageProps<"/">) {
   const initialMealDate =
     typeof date === "string" && isMealDate(date) ? date : undefined;
 
-  return (
-    <main className="min-h-screen p-8">
-      <h1 className="text-2xl font-bold">NutriAI</h1>
-      <p className="mt-2 text-gray-600">食事と栄養を記録する</p>
+    return (
+      <main className="min-h-screen px-4 pb-12 pt-6 sm:px-6">
+        <div className="mx-auto w-full max-w-2xl">
+          <header>
+            <p className="text-sm font-semibold tracking-wide text-green-800">
+              毎日の食事と栄養を記録
+            </p>
 
-      <NutritionDashboard initialMealDate={initialMealDate}/>
-    </main>
-  );
+            <h1 className="mt-1 text-3xl font-bold tracking-tight">
+              NutriAI
+            </h1>
+          </header>
+
+          <NutritionDashboard
+            initialMealDate={initialMealDate}
+          />
+        </div>
+      </main>
+    );
 }

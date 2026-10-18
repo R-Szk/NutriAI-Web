@@ -1,2 +1,33 @@
 /* アプリ全体でTailwind CSSのユーティリティクラスを利用できるようにする。 */
 @import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  background: #f4f7f2;
+  color: #17211b;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at top right,
+      rgb(220 252 231 / 45%),
+      transparent 22rem
+    ),
+    #f4f7f2;
+  color: #17211b;
+}
+
+button,
+a,
+input,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 3px solid #16a34a;
+  outline-offset: 3px;
+}

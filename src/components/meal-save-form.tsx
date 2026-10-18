@@ -67,7 +67,7 @@ export default function MealSaveForm({
 
     return (
         <form
-            className="mt-6 rounded border border-green-200 bg-green-50 p-4"
+            className="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4"
             onSubmit={handleSubmit}
         >
             <div>
@@ -78,7 +78,7 @@ export default function MealSaveForm({
             </div>
 
             <button
-                className="mt-4 rounded bg-green-700 px-4 py-2 text-white disabled:opacity-50"
+                className="mt-4 h-12 w-full rounded-xl bg-green-700 px-4 font-semibold text-white disabled:opacity-50"
                 type="submit"
                 disabled={isSaveDisabled}>
                 {isSaving ? "保存中..." : "食事に保存"}

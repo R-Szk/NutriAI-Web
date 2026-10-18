@@ -5,6 +5,16 @@ type DailyNutritionSummaryProps = {
     totals: DailyNutrientTotal[];
 };
 
+function formatAmount(total: DailyNutrientTotal): string {
+    if (!total.hasKnownValue) {
+        return "データ無し";
+    }
+
+    return `${total.amount.toLocaleString("ja-JP", {
+        maximumFractionDigits: 2,
+    })} ${total.unit}`
+}
+
 export default function DailyNutritionSummary({
     totals
 }: DailyNutritionSummaryProps) {
@@ -12,31 +22,54 @@ export default function DailyNutritionSummary({
         return null;
     }
 
-    return (
-        <section className="mt-4 rounded border border-green-700 p-4">
-            <h2 className="font-bold">1日の栄養合計</h2>
+    const energy = totals.find((total) => total.code === "energy_kcal");
 
-            <dl className="mt-3 grid grid-cols-2 gap-3">
-                {totals.map((total) => (
+    const macros = totals.filter((total) => total.code !== "energy_kcal");
+
+    return (
+        <section className="mt-6 rounded-2xl bg-green-950 p-5 text-white shadow-lg shadow-green-950/10">
+            <div className="flex items-start justify-between gap-3">
+                <div>
+                    <p className="text-sm font-medium text-green-200">1日の栄養</p>
+                    <h2 className="mt-1 text-xl font-bold">現在の実績</h2>
+                </div>
+
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-green-100">
+                    目標表示に対応予定
+                </span>
+            </div>
+
+            {energy && (
+                <div className="mt-6">
+                    <p className="text-sm text-green-200">{energy.name}</p>
+
+                    <p className="mt-1 text-3xl font-bold tracking-tight">{formatAmount(energy)}</p>
+
+                    {energy?.hasKnownValue && energy.hasMissingValue && (
+                        <p className="mt-2 text-xs text-amber-200">
+                            一部の食品にデータがありません
+                        </p>
+                    )}
+                </div>
+            )}
+
+            <dl className="mt-6 grid grid-cols-3 gap-2">
+                {macros.map((total) => (
                     <div
-                        className="rounded bg-green-50 p-3"
+                        className="rounded-xl bg-white/10 p-3"
                         key={total.code}
                     >
-                        <dt className="text-sm text-gray-600">
+                        <dt className="mt-1 text-sm text-green-200">
                             {total.name}
                         </dt>
 
-                        <dd className="font-bold">
-                            {!total.hasKnownValue
-                                ? "データ無し"
-                                : `${total.amount.toLocaleString("ja-JP", {
-                                    maximumFractionDigits: 2,
-                                })} ${total.unit}`}
+                        <dd className="mt-1 text-sm font-bold">
+                            {formatAmount(total)}
                         </dd>
 
                         {total.hasKnownValue && total.hasMissingValue && (
-                            <p className="mt-1 text-xs text-amber-700">
-                                一部の食品にデータがありません
+                            <p className="mt-1 text-xs text-amber-200">
+                                一部欠損
                             </p>
                         )}
                     </div>

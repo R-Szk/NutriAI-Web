@@ -16,18 +16,19 @@ export default function MealTimeline({
 
     return (
         <section className="mt-8">
-            <h2 className="text-xl font-bold">{mealDate}の食事記録</h2>
+            <p className="text-sm font-medium text-green-800">食事タイムライン</p>
+            <h2 className="mt-1 text-xl font-bold">{mealDate}の食事記録</h2>
 
-            <div className="relative mt-4 space-y-6 pl-6">
+            <div className="relative mt-5 space-y-5 pl-7">
                 <div
-                    className="absolute bottom-0 left-2 top-0 w-px bg-green-200"
+                    className="absolute bottom-0 left-2 top-0 w-0.5 rounded-full bg-green-200"
                     aria-hidden="true"
                 />
 
                 {timeline.map((entry) => (
                     <div className="relative" key={entry.mealType}>
                         <div
-                            className="absolute -left-6 top-5 h-4 w-4 rounded-full border-2 border-green-700 bg-white"
+                            className="absolute -left-7 top-5 h-5 w-5 rounded-full border-4 border-green-100 bg-green-700"
                             aria-hidden="true"
                         />
 

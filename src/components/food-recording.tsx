@@ -35,15 +35,17 @@ export default function FoodRecording({
     return (
         <>
             <Link
-                className="inline-flex text-sm font-medium text-green-800"
+                className="inline-flex min-h-11 items-center text-sm font-medium text-green-800"
                 href={buildDashboardHref(mealDate)}
             >
                 ← ダッシュボードへ戻る
             </Link>
 
-            <section className="mt-6">
+            <section className="mt-4 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
                 <p className="text-sm text-gray-600">追加先</p>
-                <h1 className="text-2xl font-bold">{mealDate}・{MEAL_TYPE_LABELS[mealType]}</h1>
+                <h1 className="mt-1 text-xl font-bold sm:text-2xl">
+                    {mealDate}・{MEAL_TYPE_LABELS[mealType]}
+                </h1>
 
                 {isAuthLoading && (
                     <p className="mt-2 text-sm text-gray-600">記録機能を準備しています...</p>
