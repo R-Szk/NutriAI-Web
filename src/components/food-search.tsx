@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { type SubmitEvent, useState } from "react";
 import { normalizeSearchQuery, parseIntakeAmount, calculateNutrientAmount } from "@/lib/food-search";
 import MealSaveForm from "./meal-save-form";
+import type { MealType } from "@/lib/meals";
 
 type FoodSearchResult = {
     id: number;
@@ -34,6 +35,7 @@ type CalculatedNutrient = {
 
 type FoodSearchProps = {
     mealDate: string;
+    mealType: MealType;
     userId: string | null;
     isAuthLoading: boolean;
     authError: string | null;
@@ -42,6 +44,7 @@ type FoodSearchProps = {
 
 export default function FoodSearch({
     mealDate,
+    mealType,
     userId,
     isAuthLoading,
     authError,
@@ -282,13 +285,14 @@ export default function FoodSearch({
                         confirmedAmountG !== null &&
                         calculatedNutrients.length > 0 && (
                             <MealSaveForm
-                            userId={userId}
-                            mealDate={mealDate}
-                            foodId={selectedFood.id}
-                            amountG={confirmedAmountG}
-                            isAuthLoading={isAuthLoading}
-                            authError={authError}
-                            onSaved={onMealSaved}
+                                userId={userId}
+                                mealDate={mealDate}
+                                mealType={mealType}
+                                foodId={selectedFood.id}
+                                amountG={confirmedAmountG}
+                                isAuthLoading={isAuthLoading}
+                                authError={authError}
+                                onSaved={onMealSaved}
                             />
                     )}
                 </div>

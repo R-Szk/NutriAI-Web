@@ -11,6 +11,7 @@ import { saveMealItem } from "@/lib/supabase/meal-records";
 type MealSaveFormProps = {
     userId: string | null;
     mealDate: string;
+    mealType: MealType;
     foodId: number;
     amountG: number;
     isAuthLoading: boolean;
@@ -21,13 +22,13 @@ type MealSaveFormProps = {
 export default function MealSaveForm({
     userId,
     mealDate,
+    mealType,
     foodId,
     amountG,
     isAuthLoading,
     authError,
     onSaved,
 }: MealSaveFormProps) {
-    const [mealType, setMealType] = useState<MealType>("breakfast");
     const [isSaving, setIsSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState("");
 
@@ -69,20 +70,12 @@ export default function MealSaveForm({
             className="mt-6 rounded border border-green-200 bg-green-50 p-4"
             onSubmit={handleSubmit}
         >
-            <label className="flex max-w-xs flex-col gap-1">
-                <span className="text-sm font-medium">食事区分</span>
-
-                <select
-                    className="rounded border bg-white px-3 py-2"
-                    value={mealType}
-                    onChange={(event) => setMealType(event.target.value as MealType)}>
-                    {Object.entries(MEAL_TYPE_LABELS).map(
-                        ([value, label]) => (
-                            <option key={value} value={value}>{label}</option>
-                        ),
-                    )}
-                </select>
-            </label>
+            <div>
+                <p className="text-sm font-medium">追加先</p>
+                <p className="mt-1">
+                    {mealDate}・{MEAL_TYPE_LABELS[mealType]}
+                </p>
+            </div>
 
             <button
                 className="mt-4 rounded bg-green-700 px-4 py-2 text-white disabled:opacity-50"

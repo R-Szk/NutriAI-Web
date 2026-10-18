@@ -2,7 +2,6 @@
 
 /** 記録日と匿名認証状態を管理し、配下の食事機能へ共有する親コンポーネント。 */
 import { useState } from "react";
-import FoodSearch from "@/components/food-search";
 import { useAnonymousSession } from "@/hooks/use-anonymous-session";
 import { getLocalDateString } from "@/lib/meals";
 import MealTimeline from "./meal-timeline";
@@ -20,8 +19,6 @@ export default function NutritionDashboard({
     // UTC変換による日付ずれを避け、ブラウザのローカル日付を初期値にする。
     const [mealDate, setMealDate] = useState(() => initialMealDate ?? getLocalDateString(new Date()));
 
-    const [refreshVersion, setRefreshVersion] = useState(0);
-
     const {
         userId,
         isAuthLoading,
@@ -32,15 +29,11 @@ export default function NutritionDashboard({
         meals,
         isLoading: isMealsLoading,
         loadError,
-    } = useDailyMeals(userId, mealDate, refreshVersion);
+    } = useDailyMeals(userId, mealDate);
 
     const dailyTotals = calculateDailyNutrientTotals(
         meals.flatMap((meal) => meal.items),
     );
-
-    function handleMealSaved() {
-        setRefreshVersion((current) => current + 1)
-    }
 
     return (
         <>
@@ -68,14 +61,6 @@ export default function NutritionDashboard({
             {!isMealsLoading && !loadError && (
                 <DailyNutritionSummary totals={dailyTotals} />
             )}
-
-            <FoodSearch
-                mealDate={mealDate}
-                userId={userId}
-                isAuthLoading={isAuthLoading}
-                authError={authError}
-                onMealSaved={handleMealSaved}
-            />
 
             {!userId && !isAuthLoading && !authError && (
                 <p className="mt-8 text-gray-600">記録機能を準備しています...</p>

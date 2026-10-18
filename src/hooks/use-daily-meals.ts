@@ -16,7 +16,6 @@ type UseDailyMealsResult = {
 export function useDailyMeals(
     userId: string | null,
     mealDate: string,
-    refreshVersion: number,
 ): UseDailyMealsResult {
     const [meals, setMeals] = useState<DailyMeal[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -64,7 +63,7 @@ export function useDailyMeals(
             isMounted = false;
         };
 
-    }, [userId, mealDate, refreshVersion]);
+    }, [userId, mealDate]);
 
     if (!userId) {
         return {
