@@ -47,7 +47,7 @@ export default function NutritionDashboard({
                     <span className="sr-only">記録日を選択</span>
                     <input
                         id="meal-date"
-                        className="max-w-40 rounded-xl border border-gray-200 px-3 py-2 text-sm fond-medium"
+                        className="max-w-40 rounded-xl border border-gray-200 px-3 py-2 text-sm font-medium"
                         type="date"
                         value={mealDate}
                         onChange={(event) => setMealDate(event.target.value)}
