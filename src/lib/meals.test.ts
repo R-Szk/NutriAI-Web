@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   getLocalDateString,
+  isMealDate,
   isMealType,
   MEAL_TYPE_LABELS,
   type MealRecordInput,
@@ -100,4 +101,14 @@ test("0以下または有限でない摂取量を拒否する", () => {
     }),
     "string",
   );
+});
+
+test("YYYY-MM-DD形式の実在する日付を有効と判定する", () => {
+  assert.equal(isMealDate("2026-10-10"), true);
+});
+
+test("不正な日付を無効と判定する", () => {
+  assert.equal(isMealDate("2026-02-30"), false);
+  assert.equal(isMealDate("2026-1-1"), false);
+  assert.equal(isMealDate(""), false);
 });

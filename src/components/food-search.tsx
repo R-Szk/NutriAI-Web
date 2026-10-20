@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { type SubmitEvent, useState } from "react";
 import { normalizeSearchQuery, parseIntakeAmount, calculateNutrientAmount } from "@/lib/food-search";
 import MealSaveForm from "./meal-save-form";
+import type { MealType } from "@/lib/meals";
 
 type FoodSearchResult = {
     id: number;
@@ -34,6 +35,7 @@ type CalculatedNutrient = {
 
 type FoodSearchProps = {
     mealDate: string;
+    mealType: MealType;
     userId: string | null;
     isAuthLoading: boolean;
     authError: string | null;
@@ -42,6 +44,7 @@ type FoodSearchProps = {
 
 export default function FoodSearch({
     mealDate,
+    mealType,
     userId,
     isAuthLoading,
     authError,
@@ -196,22 +199,22 @@ export default function FoodSearch({
     }
 
     return (
-        <section className="mt-8">
+        <section className="mt-6">
             <h2 className="text-xl font-bold">食品検索</h2>
 
-            <form className="mt-4 flex items-end gap-2" onSubmit={handleSubmit}>
+            <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
                 <label className="sr-only" htmlFor="food-query">食品名</label>
 
                 <input
                     id="food-query"
-                    className="w-full rounded border px-3 py-2"
+                    className="h-12 w-full rounded-xl border border-gray-200 bg-white px-4"
                     type="search"
                     placeholder="例: りんご"
                     value={query}
                     onChange={(event) => setQuery(event.target.value)} />
 
                 <button
-                    className="rounded bg-green-700 px-4 py-2 text-white disabled:opacity-50"
+                    className="h-12 w-full rounded-xl bg-green-700 px-5 text-white disabled:opacity-50 sm:w-auto"
                     type="submit"
                     disabled={isLoading}>
                         {isLoading ? "検索中..." : "検索"}
@@ -221,20 +224,20 @@ export default function FoodSearch({
 
             {message && <p className="mt-4">{message}</p>}
             {selectedFood && (
-                <div className="mt-6 rounded border border-green-700 p-4">
+                <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-green-700/20">
                     <p className="text-sm text-gray-600">選択中の食品</p>
                     <p className="font-bold">{selectedFood.name}</p>
                     <p className="text-sm">{selectedFood.food_code}・{selectedFood.food_group_name}</p>
 
                     <form
-                        className="mt-4 flex items-end gap-2"
+                        className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"
                         onSubmit={handleAmountSubmit}>
 
-                        <label className="flex flex-col gap-1" htmlFor="intake-amount">
+                        <label className="flex w-full flex-col gap-1" htmlFor="intake-amount">
                             <span className="text-sm">摂取量(g)</span>
                             <input
                                 id="intake-amount"
-                                className="rounded border px-3 py-2"
+                                className="h-12 w-full rounded-xl border border-gray-200 px-4"
                                 type="number"
                                 min="0.1"
                                 step="0.1"
@@ -249,7 +252,7 @@ export default function FoodSearch({
                         </label>
 
                         <button
-                            className="rounded bg-green-700 px-4 py-2 text-white disabled:opacity-50"
+                            className="h-12 w-full rounded-xl bg-green-700 px-5 font-semibold text-white disabled:opacity-50 sm:w-auto"
                             type="submit"
                             disabled={isCalculating}>
                                 {isCalculating ? "計算中..." : "決定"}
@@ -282,13 +285,14 @@ export default function FoodSearch({
                         confirmedAmountG !== null &&
                         calculatedNutrients.length > 0 && (
                             <MealSaveForm
-                            userId={userId}
-                            mealDate={mealDate}
-                            foodId={selectedFood.id}
-                            amountG={confirmedAmountG}
-                            isAuthLoading={isAuthLoading}
-                            authError={authError}
-                            onSaved={onMealSaved}
+                                userId={userId}
+                                mealDate={mealDate}
+                                mealType={mealType}
+                                foodId={selectedFood.id}
+                                amountG={confirmedAmountG}
+                                isAuthLoading={isAuthLoading}
+                                authError={authError}
+                                onSaved={onMealSaved}
                             />
                     )}
                 </div>
@@ -303,10 +307,10 @@ export default function FoodSearch({
                                 <button
                                     type="button"
                                     className={
-                                        "w-full rounded border p-3 text-left " +
+                                        "w-full rounded bg-white p-4 text-left shadow-sm ring-1 transition " +
                                         (isSelected
-                                            ? "border-green-700 bg-green-50"
-                                            : "border-gray-300"
+                                            ? "border-green-700"
+                                            : "ring-black/5 hover:ring-green-300"
                                         )
                                     }
                                     aria-pressed={isSelected}

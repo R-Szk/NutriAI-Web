@@ -22,21 +22,8 @@ export function validateMealRecordInput(input: MealRecordInput): string | null {
         return "ユーザー情報を確認できません";
     }
 
-    // 形式だけでなく、2月29日などが実在する暦日かも後段で比較する。
-    const dateMatch = input.mealDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!dateMatch) {
-        return "正しい日付を入力してください";
-    }
-
-    const year = Number(dateMatch[1]);
-    const month = Number(dateMatch[2]);
-    const day = Number(dateMatch[3]);
-    const date = new Date(year, month - 1, day);
-
-    const isValidDate = date.getFullYear() === year &&
-                        date.getMonth() === month - 1 &&
-                        date.getDate() === day;
-    if(!isValidDate) {
+    // 形式だけでなく、2月29日などが実在する暦日かも確認する。
+    if (!isMealDate(input.mealDate)) {
         return "正しい日付を入力してください";
     }
 
@@ -67,4 +54,22 @@ export function getLocalDateString(date: Date): string {
     const day = String(date.getDate()).padStart(2, "0")
 
     return `${year}-${month}-${day}`
+}
+
+/** YYYY-MM-DD形式で、実在する暦日かを判定する。 */
+export function isMealDate(value: string): boolean {
+    const dateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+    if (!dateMatch) {
+        return false;
+    }
+
+    const year = Number(dateMatch[1]);
+    const month = Number(dateMatch[2]);
+    const day = Number(dateMatch[3]);
+    const date = new Date(year, month - 1, day);
+
+    return date.getFullYear() === year &&
+           date.getMonth() === month - 1 &&
+           date.getDate() === day;
 }
