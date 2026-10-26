@@ -74,27 +74,27 @@
 - Consumes: 設計書の初期ラインナップ、Supabase上の `foods.food_code` と100g当たり栄養値。
 - Produces: 各seed行に必要な `food_code`、表示名、検索語、標準重量、単位、出典、参考URL、確認日。料理については1食分の全材料と重量。
 
-- [ ] **Step 1: 現在の食品DBで候補食品を特定する**
+- [x] **Step 1: 現在の食品DBで候補食品を特定する**
 
   Supabaseを読み取り専用で検索し、ご飯、納豆、食パン、絹ごし豆腐、卵、バナナ、牛乳、ヨーグルト、および3料理の各材料について、採用候補の `food_code`、正式名、`energy_kcal` を一覧化する。
 
-- [ ] **Step 2: 標準重量とレシピの根拠を調査する**
+- [x] **Step 2: 標準重量とレシピの根拠を調査する**
 
   公的資料またはメーカー公式情報を優先する。商品差がある値は代表値であることを明記し、情報源のない推測値を採用しない。
 
-- [ ] **Step 3: `easy-food-sources.md`へ記録する**
+- [x] **Step 3: `easy-food-sources.md`へ記録する**
 
   単品は `表示名 / food_code / 標準重量 / 単位 / 量候補 / 根拠 / URL / 確認日`、料理は `料理名 / 1食単位 / 材料food_code / 材料重量 / 根拠 / URL / 確認日` の表にする。
 
-- [ ] **Step 4: 計算結果を確認する**
+- [x] **Step 4: 計算結果を確認する**
 
   各単品と料理について、文科省データから算出したエネルギーを記載する。既知値だけで計算した場合や欠損がある場合は、その状態も記載する。
 
-- [ ] **Step 5: 利用者レビューを受ける**
+- [x] **Step 5: 利用者レビューを受ける**
 
   特に食パン、卵、バナナ、ヨーグルト、3料理の量とカロリーを提示し、seed作成前に承認を得る。
 
-- [ ] **Step 6: コミット候補を提示する**
+- [x] **Step 6: コミット候補を提示する**
 
   `docs/data/easy-food-sources.md` のdiffを説明し、明示的に依頼された場合だけ `docs: document easy food data sources` としてコミットする。
 
@@ -107,27 +107,27 @@
 - Consumes: Task 1の承認済み項目と既存 `foods(id)`。
 - Produces: `food_serving_presets`、`food_serving_options`、`standard_recipes`、`standard_recipe_items`。
 
-- [ ] **Step 1: migrationの期待構造をSQLレビュー用チェックリストへ落とす**
+- [x] **Step 1: migrationの期待構造をSQLレビュー用チェックリストへ落とす**
 
   4テーブルのPK/FK、正数CHECK、表示順、`is_active`、出典列、更新日時、削除動作、検索用インデックス、RLS、権限を列挙する。
 
-- [ ] **Step 2: 4テーブルを作成する**
+- [x] **Step 2: 4テーブルを作成する**
 
   `food_serving_presets` は `food_id`、`display_name`、`search_keywords text[]`、`default_amount_g`、`unit_label`、`priority`、出典、有効状態を持つ。`food_serving_options` は親preset、表示名、重量、表示順を持つ。`standard_recipes` は名称、検索語、単位、説明、優先度、出典、有効状態を持つ。`standard_recipe_items` はrecipe、food、1食分重量を持つ。
 
-- [ ] **Step 3: 制約とインデックスを追加する**
+- [x] **Step 3: 制約とインデックスを追加する**
 
   重量と表示数量は0より大きくし、同一親内の表示順と同一レシピ内の食品重複を防ぐ。検索語と優先度を使う検索に必要なインデックスだけを追加する。
 
-- [ ] **Step 4: RLSと権限を追加する**
+- [x] **Step 4: RLSと権限を追加する**
 
   `anon` と `authenticated` はSELECTのみ可能とし、INSERT/UPDATE/DELETEを付与しない。4テーブルすべてで公開読み取りポリシーを作る。
 
-- [ ] **Step 5: ローカルまたはSupabase SQL Editorでmigrationを検証する**
+- [x] **Step 5: ローカルまたはSupabase SQL Editorでmigrationを検証する**
 
   期待結果: 4テーブルが作成され、認証ユーザーはSELECTでき、ブラウザ相当のロールではINSERTできない。負または0の重量はCHECK違反になる。
 
-- [ ] **Step 6: コミット候補を提示する**
+- [x] **Step 6: コミット候補を提示する**
 
   明示的に依頼された場合だけ `feat: add easy food catalog schema` としてコミットする。
 
