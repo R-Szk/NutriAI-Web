@@ -140,39 +140,39 @@
 - Consumes: Task 2の4マスター、既存 `meals`、`meal_items`、`foods`。
 - Produces: `meal_entries`、`meal_entry_components`、`save_meal_entry(date,text,text,bigint,numeric)` RPC、既存行の移行結果。
 
-- [ ] **Step 1: 新テーブルの制約を定義する**
+- [x] **Step 1: 新テーブルの制約を定義する**
 
   `meal_entries` は `meal_id`、記録時点の `display_name`、`quantity`、`unit_label`、`source_type`、対応するnullable source ID、移行用 `legacy_meal_item_id` を持つ。`source_type` は `food` / `serving_preset` / `standard_recipe` のみ許可し、種類に対応するsource IDだけが設定されるCHECKを付ける。
 
-- [ ] **Step 2: 構成食品テーブルを定義する**
+- [x] **Step 2: 構成食品テーブルを定義する**
 
   `meal_entry_components` は `meal_entry_id`、`food_id`、`amount_g` を持ち、重量を正数に限定する。同一entry内で同一食品が複数回現れる場合は保存前に集約し、`(meal_entry_id, food_id)` を一意にする。
 
-- [ ] **Step 3: RLSと権限を実装する**
+- [x] **Step 3: RLSと権限を実装する**
 
   親の `meals.user_id = auth.uid()` を `EXISTS` で確認し、自分のentryとcomponentだけを参照可能にする。`authenticated` へはentryのSELECT/DELETEとcomponentのSELECTだけを付与し、INSERT/UPDATEは付与しない。作成は保存RPCだけに限定し、entry削除時はcomponentsをcascade削除する。
 
-- [ ] **Step 4: `save_meal_entry` RPCを実装する**
+- [x] **Step 4: `save_meal_entry` RPCを実装する**
 
   引数は `p_meal_date date`、`p_meal_type text`、`p_source_type text`、`p_source_id bigint`、`p_quantity numeric`。戻り値は `meal_id bigint` と `meal_entry_id bigint`。関数内で `auth.uid()`、日付、食事区分、数量、sourceの有効性を検証する。詳細食品の数量はグラムとして10000以下、preset/recipeの数量は個数として100以下にする。`SECURITY DEFINER` と空の `search_path` を設定し、`PUBLIC` から実行権限を剥奪して `authenticated` だけへ付与する。
 
-- [ ] **Step 5: source別の構成食品生成を実装する**
+- [x] **Step 5: source別の構成食品生成を実装する**
 
   `food` は数量をグラムとして1 componentを作る。`serving_preset` は標準重量へ数量を掛ける。`standard_recipe` は全材料重量へ数量を掛ける。表示名と単位はDBマスターから取得し、クライアント入力を信用しない。
 
-- [ ] **Step 6: 旧記録を新構造へ移行する**
+- [x] **Step 6: 旧記録を新構造へ移行する**
 
   `meal_items` 1行から `source_type = 'food'` のentryと1 componentを作る。`legacy_meal_item_id` の一意制約で再実行時の重複を防ぐ。移行前後の件数、food ID、重量が一致しなければmigrationを失敗させる。
 
-- [ ] **Step 7: SQLでRPCとRLSを検証する**
+- [x] **Step 7: SQLでRPCとRLSを検証する**
 
   正常系3 source、無効source、無効数量、材料なしレシピ、他ユーザー参照、同一食品を含む別entry、途中エラーのロールバックを確認する。
 
-- [ ] **Step 8: 移行前後の栄養合計を比較する**
+- [x] **Step 8: 移行前後の栄養合計を比較する**
 
   既存データがある日付について、旧 `meal_items` と新componentsから計算した主要栄養素が一致するSQLを実行する。
 
-- [ ] **Step 9: コミット候補を提示する**
+- [x] **Step 9: コミット候補を提示する**
 
   明示的に依頼された場合だけ `feat: add composite meal entry storage` としてコミットする。
 
