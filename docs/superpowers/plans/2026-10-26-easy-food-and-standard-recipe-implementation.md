@@ -44,6 +44,7 @@
 
 - Create: `supabase/migrations/20261026000000_create_easy_food_catalog.sql` — プリセット、量候補、標準レシピ、材料、RLSを作る。
 - Create: `supabase/migrations/20261026010000_create_meal_entries.sql` — 新しい食事記録、保存RPC、RLS、旧記録移行を作る。
+- Create: `supabase/migrations/20261026015000_add_serving_option_to_meal_entries.sql` — 固定量候補の参照と6引数版保存RPCを追加する。
 - Create: `supabase/migrations/20261026020000_seed_easy_food_catalog.sql` — 承認済み初期データを食品コードで投入する。
 
 ### Domain and data access
@@ -138,7 +139,7 @@
 
 **Interfaces:**
 - Consumes: Task 2の4マスター、既存 `meals`、`meal_items`、`foods`。
-- Produces: `meal_entries`、`meal_entry_components`、`save_meal_entry(date,text,text,bigint,numeric)` RPC、既存行の移行結果。
+- Produces: `meal_entries`、`meal_entry_components`、5引数の`save_meal_entry`と量候補IDを受け取る6引数版RPC、既存行の移行結果。
 
 - [x] **Step 1: 新テーブルの制約を定義する**
 
@@ -214,43 +215,43 @@
 
 **Interfaces:**
 - Consumes: Task 2のマスターと既存 `calculateNutrientAmount`。
-- Produces: `EasyFoodCandidate`、`ServingChoice`、`MealEntrySelection`、`validateMealEntrySelection()`、`scaleServingComponents()`、`searchEasyFoods(query)`。
+- Produces: `EasyFoodCandidate`、ID付き`ServingChoice`、任意の`servingOptionId`を持つ`MealEntrySelection`、`validateMealEntrySelection()`、`scaleServingComponents()`、`searchEasyFoods(query)`。
 
-- [ ] **Step 1: 失敗するドメインテストを書く**
+- [x] **Step 1: 失敗するドメインテストを書く**
 
   次を検証する: presetとrecipeの候補整形、優先度順、数量2で全componentが2倍、0/負数/非有限/上限超過の拒否、欠損値フラグの維持。
 
-- [ ] **Step 2: テストが失敗することを確認する**
+- [x] **Step 2: テストが失敗することを確認する**
 
   Run: `node --import tsx --test src/lib/easy-foods.test.ts`
 
   Expected: FAIL because exports are not implemented.
 
-- [ ] **Step 3: 型と純粋関数を実装する**
+- [x] **Step 3: 型と純粋関数を実装する**
 
   `validateMealEntrySelection(selection: MealEntrySelection): string | null` と `scaleServingComponents(components, quantity)` を実装する。詳細食品は10000g以下、preset/recipeは100個以下というRPCと同じ上限を適用する。
 
-- [ ] **Step 4: 純粋関数テストを通す**
+- [x] **Step 4: 純粋関数テストを通す**
 
   Run: `node --import tsx --test src/lib/easy-foods.test.ts`
 
   Expected: all tests PASS.
 
-- [ ] **Step 5: `searchEasyFoods(query: string)`を実装する**
+- [x] **Step 5: `searchEasyFoods(query: string)`を実装する**
 
   有効なpresetとrecipeだけを検索し、標準量または1食分の主要栄養素、量候補、構成食品を返す。検索語はtrimし、空なら空配列を返す。結果は完全一致、prefix一致、部分一致、priorityの順で安定ソートし、最大5件に制限する。
 
-- [ ] **Step 6: Review Focusの検索条件をテストする**
+- [x] **Step 6: Review Focusの検索条件をテストする**
 
   空文字、全角空白、英字の大文字小文字、無効化項目、同順位候補を固定fixtureで検証する。DB取得と順位付けを分離し、順位付けは純粋関数としてテストする。
 
-- [ ] **Step 7: lintと関連テストを実行する**
+- [x] **Step 7: lintと関連テストを実行する**
 
   Run: `node --import tsx --test src/lib/easy-foods.test.ts src/lib/food-search.test.ts && npm run lint`
 
   Expected: tests PASS and ESLint reports no errors.
 
-- [ ] **Step 8: コミット候補を提示する**
+- [x] **Step 8: コミット候補を提示する**
 
   明示的に依頼された場合だけ `feat: add easy food search domain` としてコミットする。
 
