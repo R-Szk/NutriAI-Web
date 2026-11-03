@@ -32,7 +32,7 @@ export default function NutritionDashboard({
     } = useDailyMeals(userId, mealDate);
 
     const dailyTotals = calculateDailyNutrientTotals(
-        meals.flatMap((meal) => meal.items),
+        meals.flatMap((meal) => meal.entries),
     );
 
     return (

@@ -6,7 +6,9 @@ import {
   isMealDate,
   isMealType,
   MEAL_TYPE_LABELS,
+  type MealEntryRecordInput,
   type MealRecordInput,
+  validateMealEntryRecordInput,
   validateMealRecordInput,
 } from "./meals";
 
@@ -111,4 +113,89 @@ test("不正な日付を無効と判定する", () => {
   assert.equal(isMealDate("2026-02-30"), false);
   assert.equal(isMealDate("2026-1-1"), false);
   assert.equal(isMealDate(""), false);
+});
+
+const validMealEntryRecord: MealEntryRecordInput = {
+  mealDate: "2026-10-26",
+  mealType: "breakfast",
+  selection: {
+    sourceType: "serving_preset",
+    sourceId: 1,
+    quantity: 1,
+  },
+};
+
+test("正しい新形式の食事記録を保存可能と判定する", () => {
+  assert.equal(
+    validateMealEntryRecordInput(validMealEntryRecord),
+    null,
+  );
+});
+
+test("新形式の食事記録で不正な日付を拒否する", () => {
+  const result = validateMealEntryRecordInput({
+    ...validMealEntryRecord,
+    mealDate: "2026-02-30",
+  });
+
+  assert.equal(typeof result, "string");
+});
+
+test("新形式の食事記録で不正な食事区分を拒否する", () => {
+  const result = validateMealEntryRecordInput({
+    ...validMealEntryRecord,
+    mealType: "brunch" as MealEntryRecordInput["mealType"],
+  });
+
+  assert.equal(typeof result, "string");
+});
+
+test("新形式の食事記録で不正な記録元IDを拒否する", () => {
+  const result = validateMealEntryRecordInput({
+    ...validMealEntryRecord,
+    selection: {
+      ...validMealEntryRecord.selection,
+      sourceId: 0,
+    },
+  });
+
+  assert.equal(typeof result, "string");
+});
+
+test("新形式の食事記録で不正な数量を拒否する", () => {
+  const result = validateMealEntryRecordInput({
+    ...validMealEntryRecord,
+    selection: {
+      ...validMealEntryRecord.selection,
+      quantity: 0,
+    },
+  });
+
+  assert.equal(typeof result, "string");
+});
+
+test("新形式の食事記録で数量の上限値を認める", () => {
+  assert.equal(
+    validateMealEntryRecordInput({
+      ...validMealEntryRecord,
+      selection: {
+        sourceType: "food",
+        sourceId: 1,
+        quantity: 10000,
+      },
+    }),
+    null,
+  );
+
+  assert.equal(
+    validateMealEntryRecordInput({
+      ...validMealEntryRecord,
+      selection: {
+        sourceType: "standard_recipe",
+        sourceId: 1,
+        quantity: 100,
+      },
+    }),
+    null,
+  );
 });

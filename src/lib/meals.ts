@@ -1,3 +1,8 @@
+import {
+    type MealEntrySelection,
+    validateMealEntrySelection,
+} from "./easy-foods";
+
 /** DBに保存する言語非依存コードと、画面に表示する日本語の対応表。 */
 export const MEAL_TYPE_LABELS = {
     breakfast: "朝食",
@@ -14,6 +19,12 @@ export type MealRecordInput = {
     mealType: MealType;
     foodId: number;
     amountG: number;
+};
+
+export type MealEntryRecordInput = {
+    mealDate: string;
+    mealType: MealType;
+    selection: MealEntrySelection;
 };
 
 /** Supabaseへ送る前に、食事記録の必須値と値域を検証する。正常時はnullを返す。 */
@@ -40,6 +51,19 @@ export function validateMealRecordInput(input: MealRecordInput): string | null {
     }
 
     return null;
+}
+
+/** 新形式の食事記録をSupabaseへ送る前に検証する。 */
+export function validateMealEntryRecordInput(input:MealEntryRecordInput): string | null {
+    if (!isMealDate(input.mealDate)) {
+        return "正しい日付を入力してください";
+    }
+
+    if (!isMealType(input.mealType)) {
+        return "正しい食事区分を選択してください";
+    }
+
+    return validateMealEntrySelection(input.selection);
 }
 
 /** 外部入力の文字列をMealTypeへ安全に絞り込む型ガード。 */

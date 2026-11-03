@@ -1,6 +1,6 @@
 /** 1日分の食品から主要栄養素を合計する純粋関数。 */
 import { calculateNutrientAmount } from "@/lib/food-search";
-import type { DailyMealItem } from "@/lib/supabase/meal-records";
+import type { DailyMealEntry } from "@/lib/supabase/meal-records";
 
 export type DailyNutrientTotal = {
     code: string;
@@ -12,29 +12,31 @@ export type DailyNutrientTotal = {
     hasKnownValue: boolean;
 };
 
-export function calculateDailyNutrientTotals(items: DailyMealItem[]): DailyNutrientTotal[] {
+export function calculateDailyNutrientTotals(entries: DailyMealEntry[]): DailyNutrientTotal[] {
     const totalsByCode = new Map<string, DailyNutrientTotal>();
 
-    for (const item of items) {
-        for (const nutrient of item.nutrients) {
-            const currentTotal = totalsByCode.get(nutrient.code) ?? {
-                code: nutrient.code,
-                name: nutrient.name,
-                unit: nutrient.unit,
-                displayOrder: nutrient.displayOrder,
-                amount: 0,
-                hasMissingValue: false,
-                hasKnownValue: false,
-            };
+    for (const entry of entries) {
+        for (const component of entry.components) {
+            for (const nutrient of component.nutrients) {
+                const currentTotal = totalsByCode.get(nutrient.code) ?? {
+                    code: nutrient.code,
+                    name: nutrient.name,
+                    unit: nutrient.unit,
+                    displayOrder: nutrient.displayOrder,
+                    amount: 0,
+                    hasMissingValue: false,
+                    hasKnownValue: false,
+                };
 
-            if (nutrient.amountPer100g === null) {
-                currentTotal.hasMissingValue = true;
-            } else {
-                currentTotal.amount += calculateNutrientAmount(nutrient.amountPer100g, item.amountG);
-                currentTotal.hasKnownValue = true;
+                if (nutrient.amountPer100g === null) {
+                    currentTotal.hasMissingValue = true;
+                } else {
+                    currentTotal.amount += calculateNutrientAmount(nutrient.amountPer100g, component.amountG);
+                    currentTotal.hasKnownValue = true;
+                }
+
+                totalsByCode.set(nutrient.code, currentTotal);
             }
-
-            totalsByCode.set(nutrient.code, currentTotal);
         }
     }
 

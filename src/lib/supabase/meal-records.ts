@@ -1,11 +1,43 @@
 /** 食事記録の保存・取得に使う型とSupabaseアクセスをまとめるデータ層。 */
-import { isMealType, type MealRecordInput, MealType, validateMealRecordInput } from "@/lib/meals";
+import {
+    isMealType,
+    type MealEntryRecordInput,
+    type MealRecordInput,
+    type MealType,
+    validateMealRecordInput,
+    validateMealEntryRecordInput
+} from "@/lib/meals";
 import { createClient } from "@/lib/supabase/client";
+import type { MealEntrySourceType } from "@/lib/easy-foods";
 
 export type SaveMealItemResult = {
     mealId: number;
     mealItemId: number;
 };
+
+export type SaveMealEntryResult = {
+    mealId: number;
+    mealEntryId: number;
+};
+
+type SaveMealEntryRpcRow = {
+    meal_id: number;
+    meal_entry_id: number;
+};
+
+/** RPCの戻り値が保存結果として必要な形を持つか確認する。 */
+function isSaveMealEntryRpcRow(value: unknown): value is SaveMealEntryRpcRow {
+    if (typeof value !== "object" || value === null) {
+        return false;
+    }
+
+    return (
+        "meal_id" in value
+        && typeof value.meal_id === "number"
+        && "meal_entry_id" in value
+        && typeof value.meal_entry_id === "number"
+    );
+}
 
 export type DailyMealItem = {
     id: number;
@@ -28,34 +60,82 @@ export type DailyMealItem = {
 export type DailyMeal = {
     id: number;
     mealType: MealType;
+    entries: DailyMealEntry[];
     items: DailyMealItem[];
+};
+
+type DailyMealComponentRecord = {
+  id: number;
+  amount_g: number;
+  foods: {
+    id: number;
+    food_code: string;
+    name: string;
+    food_nutrients: Array<{
+      amount: number | null;
+      value_status: string;
+      nutrients: {
+        code: string;
+        name: string;
+        unit: string;
+        display_order: number;
+        is_primary: boolean;
+      };
+    }>;
+  };
 };
 
 /** Supabaseのnested selectが返すDB列名のままのデータ形式。 */
 type DailyMealRecord = {
   id: number;
   meal_type: string;
-  meal_items: Array<{
+  meal_entries: Array<{
     id: number;
-    amount_g: number;
-    foods: {
-      id: number;
-      food_code: string;
-      name: string;
-      food_nutrients: Array<{
-        amount: number | null;
-        value_status: string;
-        nutrients: {
-          code: string;
-          name: string;
-          unit: string;
-          display_order: number;
-          is_primary: boolean;
-        };
-      }>;
-    };
+    display_name: string;
+    quantity: number;
+    unit_label: string;
+    source_type: string;
+    meal_entry_components: DailyMealComponentRecord[];
   }>;
 };
+
+/** 1件の食事記録を栄養計算用に展開した構成食品。 */
+export type DailyMealComponent = {
+  id: number;
+  amountG: number;
+  food: {
+    id: number;
+    foodCode: string;
+    name: string;
+  };
+  nutrients: Array<{
+    code: string;
+    name: string;
+    unit: string;
+    displayOrder: number;
+    amountPer100g: number | null;
+    valueStatus: string;
+  }>;
+};
+
+/** 利用者が記録した食品・標準量・標準料理の1件。 */
+export type DailyMealEntry = {
+  id: number;
+  displayName: string;
+  quantity: number;
+  unitLabel: string;
+  sourceType: MealEntrySourceType;
+  components: DailyMealComponent[];
+};
+
+/** DBから取得した文字列を、対応済みの記録元へ絞り込む。 */
+function isMealEntrySourceType(value: string): value is MealEntrySourceType {
+    return (
+        value === "food"
+        || value === "serving_preset"
+        || value === "standard_recipe"
+    );
+}
 
 const MEAL_TYPE_ORDER: MealType[] = [
   "breakfast",
@@ -123,6 +203,70 @@ export async function saveMealItem(input:MealRecordInput): Promise<SaveMealItemR
 }
 
 /**
+ * 選択した食品・標準量・標準料理をRPCで保存する。
+ * ユーザーIDと構成食品の展開は、改ざんを防ぐためDB側へ委ねる。
+ */
+export async function saveMealEntry(input: MealEntryRecordInput): Promise<SaveMealEntryResult> {
+    const validationError = validateMealEntryRecordInput(input);
+
+    if (validationError) {
+        throw new Error(validationError);
+    }
+
+    const supabase = createClient();
+
+    const { data, error } = await supabase
+        .rpc("save_meal_entry", {
+            p_meal_date: input.mealDate,
+            p_meal_type: input.mealType,
+            p_source_type: input.selection.sourceType,
+            p_source_id: input.selection.sourceId,
+            p_quantity: input.selection.quantity,
+            p_serving_option_id: input.selection.servingOptionId ?? null,
+        })
+        .single();
+
+    if (error) {
+        throw new Error(`食事記録の保存に失敗しました: ${error.message}`);
+    }
+
+    if (!isSaveMealEntryRpcRow(data)) {
+        throw new Error("保存した食事記録を確認できません");
+    }
+
+    return {
+        mealId: Number(data.meal_id),
+        mealEntryId: Number(data.meal_entry_id),
+    };
+}
+
+/** DBのsnake_case形式を、画面と計算で使うcamelCase形式へ変換する。 */
+function mapDailyMealComponent(component: DailyMealComponentRecord): DailyMealComponent {
+    return {
+        id: component.id,
+        amountG: Number(component.amount_g),
+        food: {
+            id: component.foods.id,
+            foodCode: component.foods.food_code,
+            name: component.foods.name,
+        },
+        nutrients: component.foods.food_nutrients
+            .filter((foodNutrient) => foodNutrient.nutrients.is_primary)
+            .sort(
+                (a, b) => a.nutrients.display_order - b.nutrients.display_order
+            )
+            .map((foodNutrient) => ({
+                code: foodNutrient.nutrients.code,
+                name: foodNutrient.nutrients.name,
+                unit: foodNutrient.nutrients.unit,
+                displayOrder: foodNutrient.nutrients.display_order,
+                amountPer100g: foodNutrient.amount,
+                valueStatus: foodNutrient.value_status,
+            })),
+    };
+}
+
+/**
  * 現在のユーザーが選択した日付の食事と主要栄養素を取得する。
  * DBのsnake_caseを、画面で扱いやすいcamelCaseへ変換して返す。
  */
@@ -140,20 +284,27 @@ export async function fetchDailyMeals(userId:string, mealDate: string): Promise<
             meal_type,
             meal_items (
                 id,
-                amount_g,
-                foods (
+                display_name,
+                quantity,
+                unit_label,
+                source_type,
+                meal_entry_components (
                     id,
-                    food_code,
-                    name,
-                    food_nutrients (
-                        amount,
-                        value_status,
-                        nutrients (
-                            code,
-                            name,
-                            unit,
-                            display_order,
-                            is_primary
+                    amount_g,
+                    foods (
+                        id,
+                        food_code,
+                        name,
+                        food_nutrients (
+                            amount,
+                            value_status,
+                            nutrients (
+                                code,
+                                name,
+                                unit,
+                                display_order,
+                                is_primary
+                            )
                         )
                     )
                 )
@@ -172,29 +323,26 @@ export async function fetchDailyMeals(userId:string, mealDate: string): Promise<
             throw new Error(`未対応の食事区分です: ${meal.meal_type}`);
         }
 
+        const entries: DailyMealEntry[] = meal.meal_entries.map((entry) => {
+            if (!isMealEntrySourceType(entry.source_type)) {
+                throw new Error(`未対応の記録元です: ${entry.source_type}`);
+            }
+
+            return {
+                id: entry.id,
+                displayName: entry.display_name,
+                quantity: Number(entry.quantity),
+                unitLabel: entry.unit_label,
+                sourceType: entry.source_type,
+                components: entry.meal_entry_components.map(mapDailyMealComponent),
+            };
+        });
+
         return {
             id: meal.id,
             mealType: meal.meal_type,
-            items: meal.meal_items.map((item) => ({
-                id: item.id,
-                amountG: Number(item.amount_g),
-                food: {
-                    id: item.foods.id,
-                    foodCode: item.foods.food_code,
-                    name: item.foods.name,
-                },
-                nutrients: item.foods.food_nutrients
-                    .filter((foodNutrient) => foodNutrient.nutrients.is_primary)
-                    .sort((a, b) => a.nutrients.display_order - b.nutrients.display_order)
-                    .map((foodNutrient) => ({
-                        code: foodNutrient.nutrients.code,
-                        name: foodNutrient.nutrients.name,
-                        unit: foodNutrient.nutrients.unit,
-                        displayOrder: foodNutrient.nutrients.display_order,
-                        amountPer100g: foodNutrient.amount,
-                        valueStatus: foodNutrient.value_status,
-                    })),
-            })),
+            entries,
+            items: entries.flatMap((entry) => entry.components)
         };
     });
 

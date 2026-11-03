@@ -35,6 +35,7 @@ test("既存の食事を対応する区分へ配置できる", () => {
   const lunch: DailyMeal = {
     id: 10,
     mealType: "lunch",
+    entries: [],
     items: [],
   };
 
