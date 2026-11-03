@@ -4,6 +4,7 @@ import test from "node:test";
 
 import {
     calculateEasyFoodNutrients,
+    calculateSelectedEasyFoodNutrients,
     rankEasyFoodCandidates,
     scaleServingComponents,
     validateMealEntrySelection,
@@ -177,6 +178,108 @@ test("数量に応じて全ての構成食品の重量を拡大できる", () =>
     );
 });
 
+test("固定量候補の重量に応じて栄養値を計算できる", () => {
+    const candidate: EasyFoodCandidate = {
+        sourceType: "serving_preset",
+        sourceId: 10,
+        displayName: "納豆",
+        description: null,
+        sourceDescription: "テスト用の根拠",
+        sourceUrl: null,
+        sourceCheckedAt: "2026-10-26",
+        searchKeywords: ["納豆"],
+        unitLabel: "1パック",
+        priority: 100,
+        isActive: true,
+        servingChoices: [
+            {
+                id: 20,
+                label: "2パック（90g）",
+                amountG: 90,
+                displayOrder: 0,
+            },
+        ],
+        components: [
+            {
+                foodId: 100,
+                foodCode: "04046",
+                name: "糸引き納豆",
+                amountG: 45,
+                nutrients: [
+                    {
+                        code: "energy_kcal",
+                        name: "エネルギー",
+                        unit: "kcal",
+                        displayOrder: 2,
+                        amountPer100g: 184,
+                        valueStatus: "measured",
+                    },
+                ],
+            },
+        ],
+        nutrients: [],
+    };
+
+    const nutrients = calculateSelectedEasyFoodNutrients(
+        candidate,
+        {
+            sourceType: "serving_preset",
+            sourceId: 10,
+            servingOptionId: 20,
+            quantity: 1,
+        },
+    );
+
+    assert.equal(nutrients?.[0].amount, 165.6);
+});
+
+test("任意グラムで元食品の栄養値を計算できる", () => {
+    const candidate: EasyFoodCandidate = {
+        sourceType: "serving_preset",
+        sourceId: 10,
+        displayName: "納豆",
+        description: null,
+        sourceDescription: "テスト用の根拠",
+        sourceUrl: null,
+        sourceCheckedAt: "2026-10-26",
+        searchKeywords: ["納豆"],
+        unitLabel: "1パック",
+        priority: 100,
+        isActive: true,
+        servingChoices: [],
+        components: [
+            {
+                foodId: 100,
+                foodCode: "04046",
+                name: "糸引き納豆",
+                amountG: 45,
+                nutrients: [
+                    {
+                        code: "energy_kcal",
+                        name: "エネルギー",
+                        unit: "kcal",
+                        displayOrder: 2,
+                        amountPer100g: 184,
+                        valueStatus: "measured",
+                    },
+                ],
+            },
+        ],
+        nutrients: [],
+    };
+
+    const nutrients = calculateSelectedEasyFoodNutrients(
+        candidate,
+        {
+            sourceType: "food",
+            sourceId: 100,
+            quantity: 60,
+        },
+    );
+
+    assert.equal(nutrients?.[0].amount, 110.4);
+});
+
 function createCandidate(
     input: Pick<
         EasyFoodCandidate,
@@ -191,6 +294,10 @@ function createCandidate(
         sourceType: "serving_preset",
         sourceId: input.sourceId,
         displayName: input.displayName,
+        description: null,
+        sourceDescription: "テスト用の根拠",
+        sourceUrl: null,
+        sourceCheckedAt: "2026-10-26",
         searchKeywords: input.searchKeywords,
         unitLabel: "1個",
         priority: input.priority,
@@ -451,6 +558,9 @@ test("Supabaseの標準量データを画面用候補へ変換できる", () => 
         default_amount_g: 45,
         unit_label: "1パック",
         priority: 90,
+        source_description: "農林水産省の資料を参考に設定",
+        source_url: "https://example.com/natto",
+        source_checked_at: "2026-10-26",
         is_active: true,
         food_serving_options: [
             {
@@ -500,6 +610,13 @@ test("Supabaseの標準量データを画面用候補へ変換できる", () => 
     assert.equal(candidate.sourceType, "serving_preset");
     assert.equal(candidate.sourceId, 11);
     assert.equal(candidate.displayName, "納豆");
+    assert.equal(candidate.description, null);
+    assert.equal(
+        candidate.sourceDescription,
+        "農林水産省の資料を参考に設定",
+    );
+    assert.equal(candidate.sourceUrl, "https://example.com/natto");
+    assert.equal(candidate.sourceCheckedAt, "2026-10-26");
 
     assert.deepEqual(
         candidate.servingChoices.map((choice) => ({
@@ -540,7 +657,11 @@ test("Supabaseの標準レシピを材料と栄養値を持つ候補へ変換で
         display_name: "テスト料理",
         search_keywords: ["料理"],
         unit_label: "1食",
+        description: "NutriAI標準レシピ",
         priority: 80,
+        source_description: "公的資料と一般的なレシピを参考に設定",
+        source_url: "https://example.com/curry",
+        source_checked_at: "2026-10-26",
         is_active: true,
         standard_recipe_items: [
             {
@@ -615,6 +736,13 @@ test("Supabaseの標準レシピを材料と栄養値を持つ候補へ変換で
     assert.equal(candidate.sourceType, "standard_recipe");
     assert.equal(candidate.sourceId, 21);
     assert.equal(candidate.displayName, "テスト料理");
+    assert.equal(candidate.description, "NutriAI標準レシピ");
+    assert.equal(
+        candidate.sourceDescription,
+        "公的資料と一般的なレシピを参考に設定",
+    );
+    assert.equal(candidate.sourceUrl, "https://example.com/curry");
+    assert.equal(candidate.sourceCheckedAt, "2026-10-26");
     assert.deepEqual(candidate.servingChoices, []);
 
     // DBから逆順で届いてもdisplay_order順へ並べる。

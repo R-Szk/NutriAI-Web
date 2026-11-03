@@ -6,6 +6,13 @@ import { type SubmitEvent, useState } from "react";
 import { normalizeSearchQuery, parseIntakeAmount, calculateNutrientAmount } from "@/lib/food-search";
 import MealSaveForm from "./meal-save-form";
 import type { MealType } from "@/lib/meals";
+import type {
+    EasyFoodCandidate,
+    MealEntrySelection,
+} from "@/lib/easy-foods";
+import { searchEasyFoods } from "@/lib/supabase/easy-foods";
+import EasyFoodResults from "./easy-food-results";
+import ServingSelector from "./serving-selector";
 
 type FoodSearchResult = {
     id: number;
@@ -53,6 +60,10 @@ export default function FoodSearch({
     const [foods, setFoods] = useState<FoodSearchResult[]>([]);
     const [selectedFood, setSelectedFood] = useState<FoodSearchResult | null>(null);
 
+    const [easyFoods, setEasyFoods] = useState<EasyFoodCandidate[]>([]);
+    const [selectedCandidate, setSelectedCandidate] = useState<EasyFoodCandidate | null>(null);
+    const [entrySelection, setEntrySelection] = useState<MealEntrySelection | null>(null);
+
     // 入力中の文字列と、計算に使用した確定値を分けて誤保存を防ぐ。
     const [amountText, setAmountText] = useState("");
     const [amountMessage, setAmountMessage] = useState("");
@@ -79,10 +90,16 @@ export default function FoodSearch({
             setAmountText("");
             setAmountMessage("");
             setMessage("食品名を入力してください");
+            setEasyFoods([]);
+            setSelectedCandidate(null);
+            setEntrySelection(null);
             return;
         }
 
         setIsLoading(true);
+        setEasyFoods([]);
+        setSelectedCandidate(null);
+        setEntrySelection(null);
         setSelectedFood(null);
         setMessage("");
         setCalculatedNutrients([]);
@@ -92,30 +109,69 @@ export default function FoodSearch({
 
         // Phase 1は文部科学省データだけを対象にし、結果数も画面で扱える件数に絞る。
         const supabase = createClient();
-        const { data, error } = await supabase
-            .from("foods")
-            .select("id, food_code, name, food_group_name")
-            .eq("source", "MEXT")
-            .ilike("name", `%${normalizedQuery}%`)
-            .order("food_code")
-            .limit(20);
 
-        setIsLoading(false);
+        try {
+            const [recommendations, detailedResult] = await Promise.all([
+                searchEasyFoods(normalizedQuery),
 
-        if (error) {
+                supabase
+                    .from("foods")
+                    .select("id, food_code, name, food_group_name")
+                    .eq("source", "MEXT")
+                    .ilike("name", `%${normalizedQuery}%`)
+                    .order("food_code")
+                    .limit(20),
+            ]);
+
+            if(detailedResult.error) {
+                throw new Error(`詳しい食品の検索に失敗しました: ${detailedResult.error.message}`);
+            }
+
+            const detailedFoods = detailedResult.data ?? [];
+
+            setEasyFoods(recommendations);
+            setFoods(detailedFoods);
+
+            if (recommendations.length === 0 && detailedFoods.length === 0) {
+                setMessage("該当する食品が見つかりませんでした");
+            }
+        } catch (error) {
+            setEasyFoods([]);
             setFoods([]);
-            setMessage(`検索に失敗しました: ${error.message}`);
-            return;
-        }
-
-        setFoods(data ?? []);
-
-        if (!data || data.length === 0) {
-            setMessage("該当する食品が見つかりませんでした");
+            setMessage(
+                error instanceof Error ? error.message : "検索に失敗しました"
+            );
+        } finally {
+            setIsLoading(false);
         }
     }
 
+    function handleEasyFoodSelection(candidate: EasyFoodCandidate) {
+        const isSameCandidate =
+            selectedCandidate?.sourceType === candidate.sourceType
+            && selectedCandidate.sourceId === candidate.sourceId;
+
+        if (isSameCandidate) {
+            setSelectedCandidate(null);
+            setEntrySelection(null);
+            return;
+        }
+
+        setSelectedCandidate(candidate);
+        setEntrySelection(null)
+
+        // おすすめと詳細食品を同時選択状態にしない
+        setSelectedFood(null);
+        setConfirmedAmountG(null);
+        setCalculatedNutrients([]);
+        setAmountText("");
+        setAmountMessage("");
+    }
+
     function handleFoodSelection(food: FoodSearchResult) {
+        setSelectedCandidate(null);
+        setEntrySelection(null);
+
         const isSameFood = selectedFood?.food_code === food.food_code;
 
         // 食品が変わると以前の栄養計算と摂取量は無効になる。
@@ -223,6 +279,34 @@ export default function FoodSearch({
             </form>
 
             {message && <p className="mt-4">{message}</p>}
+            <EasyFoodResults
+                candidates={easyFoods}
+                selectedCandidate={selectedCandidate}
+                selection={entrySelection}
+                onSelect={handleEasyFoodSelection}
+            />
+
+            {selectedCandidate && (
+                <ServingSelector
+                    key={`${selectedCandidate.sourceType}-${selectedCandidate.sourceId}`}
+                    candidate={selectedCandidate}
+                    selection={entrySelection}
+                    onChange={setEntrySelection}
+                />
+            )}
+
+            {selectedCandidate && entrySelection && (
+                    <MealSaveForm
+                        userId={userId}
+                        mealDate={mealDate}
+                        mealType={mealType}
+                        selection={entrySelection}
+                        isAuthLoading={isAuthLoading}
+                        authError={authError}
+                        onSaved={onMealSaved}
+                    />
+            )}
+
             {selectedFood && (
                 <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-green-700/20">
                     <p className="text-sm text-gray-600">選択中の食品</p>
@@ -288,8 +372,11 @@ export default function FoodSearch({
                                 userId={userId}
                                 mealDate={mealDate}
                                 mealType={mealType}
-                                foodId={selectedFood.id}
-                                amountG={confirmedAmountG}
+                                selection={{
+                                    sourceType: "food",
+                                    sourceId: selectedFood.id,
+                                    quantity: confirmedAmountG,
+                                }}
                                 isAuthLoading={isAuthLoading}
                                 authError={authError}
                                 onSaved={onMealSaved}
@@ -298,30 +385,36 @@ export default function FoodSearch({
                 </div>
             )}
             {foods.length > 0 && (
-                <ul className="mt-4 space-y-2">
-                    {foods.map((food) => {
-                        const isSelected = selectedFood?.food_code === food.food_code;
+                <details className="mt-5 rounded-2xl border border-gray-200 bg-white p-4">
+                    <summary className="cursor-pointer font-semibold">
+                        詳しい食品を見る({foods.length}件)
+                    </summary>
+                    <ul className="mt-4 space-y-2">
 
-                        return (
-                            <li key={food.food_code}>
-                                <button
-                                    type="button"
-                                    className={
-                                        "w-full rounded bg-white p-4 text-left shadow-sm ring-1 transition " +
-                                        (isSelected
-                                            ? "border-green-700"
-                                            : "ring-black/5 hover:ring-green-300"
-                                        )
-                                    }
-                                    aria-pressed={isSelected}
-                                    onClick={() => handleFoodSelection(food)}>
-                                    <p className="font-medium">{food.name}</p>
-                                    <p className="text-sm text-gray-600">{food.food_code}・{food.food_group_name}</p>
-                                </button>
-                            </li>
-                        );
-                    })}
-                </ul>
+                        {foods.map((food) => {
+                            const isSelected = selectedFood?.food_code === food.food_code;
+
+                            return (
+                                <li key={food.food_code}>
+                                    <button
+                                        type="button"
+                                        className={
+                                            "w-full rounded bg-white p-4 text-left shadow-sm ring-1 transition " +
+                                            (isSelected
+                                                ? "border-green-700"
+                                                : "ring-black/5 hover:ring-green-300"
+                                            )
+                                        }
+                                        aria-pressed={isSelected}
+                                        onClick={() => handleFoodSelection(food)}>
+                                        <p className="font-medium">{food.name}</p>
+                                        <p className="text-sm text-gray-600">{food.food_code}・{food.food_group_name}</p>
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </details>
             )}
         </section>
     );

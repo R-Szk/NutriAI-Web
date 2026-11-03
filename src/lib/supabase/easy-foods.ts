@@ -22,6 +22,9 @@ type FoodNutrientRecord = {
 export type PresetRecord = {
     id: number;
     display_name: string;
+    source_description: string;
+    source_url: string | null;
+    source_checked_at: string;
     search_keywords: string[];
     default_amount_g: number;
     unit_label: string;
@@ -44,6 +47,10 @@ export type PresetRecord = {
 export type RecipeRecord = {
     id: number;
     display_name: string;
+    description: string;
+    source_description: string;
+    source_url: string | null;
+    source_checked_at: string;
     search_keywords: string[];
     unit_label: string;
     priority: number;
@@ -89,6 +96,10 @@ export function mapPresetRecordToCandidate(
         sourceType: "serving_preset",
         sourceId: record.id,
         displayName: record.display_name,
+        description: null,
+        sourceDescription: record.source_description,
+        sourceUrl: record.source_url,
+        sourceCheckedAt: record.source_checked_at,
         searchKeywords: record.search_keywords,
         unitLabel: record.unit_label,
         priority: record.priority,
@@ -135,6 +146,10 @@ export function mapRecipeRecordToCandidate(
         sourceType: "standard_recipe",
         sourceId: record.id,
         displayName: record.display_name,
+        description: record.description,
+        sourceDescription: record.source_description,
+        sourceUrl: record.source_url,
+        sourceCheckedAt: record.source_checked_at,
         searchKeywords: record.search_keywords,
         unitLabel: record.unit_label,
         priority: record.priority,
@@ -173,6 +188,9 @@ export async function searchEasyFoods(
                 default_amount_g,
                 unit_label,
                 priority,
+                source_description,
+                source_url,
+                source_checked_at,
                 is_active,
                 food_serving_options (
                     id,
@@ -210,7 +228,11 @@ export async function searchEasyFoods(
                 display_name,
                 search_keywords,
                 unit_label,
+                description,
                 priority,
+                source_description,
+                source_url,
+                source_checked_at,
                 is_active,
                 standard_recipe_items (
                     amount_g,

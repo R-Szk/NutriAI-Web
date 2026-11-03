@@ -6,14 +6,14 @@ import {
     MEAL_TYPE_LABELS,
     type MealType,
 } from "@/lib/meals";
-import { saveMealItem } from "@/lib/supabase/meal-records";
+import type { MealEntrySelection } from "@/lib/easy-foods";
+import { saveMealEntry } from "@/lib/supabase/meal-records";
 
 type MealSaveFormProps = {
     userId: string | null;
     mealDate: string;
     mealType: MealType;
-    foodId: number;
-    amountG: number;
+    selection: MealEntrySelection;
     isAuthLoading: boolean;
     authError: string | null;
     onSaved: () => void;
@@ -23,8 +23,7 @@ export default function MealSaveForm({
     userId,
     mealDate,
     mealType,
-    foodId,
-    amountG,
+    selection,
     isAuthLoading,
     authError,
     onSaved,
@@ -45,12 +44,10 @@ export default function MealSaveForm({
 
         // DB処理の成功・失敗をこのフォーム内で利用者へフィードバックする。
         try {
-            await saveMealItem({
-                userId,
+            await saveMealEntry({
                 mealDate,
                 mealType,
-                foodId,
-                amountG,
+                selection,
             });
 
             setSaveMessage("食事を保存しました");

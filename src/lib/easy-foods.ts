@@ -57,6 +57,10 @@ export type EasyFoodCandidate = {
     sourceType: "serving_preset" | "standard_recipe";
     sourceId: number;
     displayName: string;
+    description: string | null;
+    sourceDescription: string;
+    sourceUrl: string | null;
+    sourceCheckedAt: string;
     searchKeywords: string[];
     unitLabel: string;
     priority: number;
@@ -235,4 +239,69 @@ export function rankEasyFoodCandidates(
         })
         .slice(0, 5)
         .map((result) => result.candidate);
+}
+
+/**
+ * 候補と確定した量から、実際に保存する量の栄養値を計算する。
+ * 候補とselectionの組み合わせが不正な場合はnullを返す。
+ */
+export function calculateSelectedEasyFoodNutrients(
+    candidate: EasyFoodCandidate,
+    selection: MealEntrySelection,
+): EasyFoodNutrient[] | null {
+    const validationError = validateMealEntrySelection(selection);
+
+    if (validationError) {
+        return null;
+    }
+
+    // 任意グラムは、プリセットが参照する元食品として計算する。
+    if (selection.sourceType === "food") {
+        const component = candidate.components.find(
+            (item) => item.foodId === selection.sourceId,
+        );
+
+        if (!component || candidate.components.length !== 1) {
+            return null;
+        }
+
+        const scale = selection.quantity / component.amountG;
+
+        return calculateEasyFoodNutrients(scaleServingComponents([component], scale));
+    }
+
+    // 標準量・標準料理は、選択元が候補と一致する必要がある。
+    if (
+        selection.sourceType !== candidate.sourceType
+        || selection.sourceId !== candidate.sourceId
+    ) {
+        return null;
+    }
+
+    let scale = selection.quantity;
+
+    if (selection.servingOptionId !== undefined) {
+        if (candidate.sourceType !== "serving_preset") {
+            return null;
+        }
+
+        const servingChoice = candidate.servingChoices.find(
+            (choice) => choice.id === selection.servingOptionId,
+        );
+
+        const defaultAmountG = candidate.components.reduce(
+            (total, component) => total + component.amountG,
+            0,
+        );
+
+        if (!servingChoice || defaultAmountG <= 0) {
+            return null;
+        }
+
+        scale *= servingChoice.amountG / defaultAmountG;
+    }
+
+    return calculateEasyFoodNutrients(
+        scaleServingComponents(candidate.components, scale),
+    );
 }

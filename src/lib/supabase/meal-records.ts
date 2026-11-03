@@ -282,7 +282,7 @@ export async function fetchDailyMeals(userId:string, mealDate: string): Promise<
         .select(`
             id,
             meal_type,
-            meal_items (
+            meal_entries (
                 id,
                 display_name,
                 quantity,
